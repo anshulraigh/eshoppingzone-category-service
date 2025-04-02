@@ -25,82 +25,129 @@ class CategoryServiceTest {
     @InjectMocks
     private CategoryService categoryService;
 
-    private Category category1;
-    private Category category2;
+    private Category electronicsCategory;
+    private Category clothingCategory;
 
     @BeforeEach
     void setUp() {
-        category1 = new Category(1L, "Electronics", "Gadgets and Devices");
-        category2 = new Category(2L, "Clothing", "Apparel and Accessories");
+        // Initializing category objects before each test
+        electronicsCategory = new Category(1L, "Electronics", "Gadgets and Devices");
+        clothingCategory = new Category(2L, "Clothing", "Apparel and Accessories");
     }
 
     @Test
-    void getAllCategories() {
-        List<Category> categories = Arrays.asList(category1, category2);
+    void testGetAllCategories_ReturnsCategoryList() {
+        // Mocking repository response with a list of categories
+        List<Category> categories = Arrays.asList(electronicsCategory, clothingCategory);
         when(categoryRepository.findAll()).thenReturn(categories);
 
+        // Calling service method
         List<Category> result = categoryService.getAllCategories();
 
-        assertEquals(2, result.size());
+        // Verifying the response
+        assertEquals(2, result.size(), "The size of returned categories should be 2.");
         verify(categoryRepository, times(1)).findAll();
     }
 
     @Test
-    void getCategoryById() {
-        when(categoryRepository.findById(1L)).thenReturn(Optional.of(category1));
+    void testGetCategoryById_WhenCategoryExists() {
+        // Mocking repository to return a category for a given ID
+        when(categoryRepository.findById(1L)).thenReturn(Optional.of(electronicsCategory));
 
+        // Calling service method
         Optional<Category> result = categoryService.getCategoryById(1L);
 
-        assertTrue(result.isPresent());
-        assertEquals("Electronics", result.get().getName());
+        // Verifying the response
+        assertTrue(result.isPresent(), "Category should be found.");
+        assertEquals("Electronics", result.get().getName(), "Category name should match.");
         verify(categoryRepository, times(1)).findById(1L);
     }
 
     @Test
-    void addCategory() {
-        when(categoryRepository.save(category1)).thenReturn(category1);
+    void testGetCategoryById_WhenCategoryDoesNotExist() {
+        // Mocking repository to return empty when category is not found
+        when(categoryRepository.findById(3L)).thenReturn(Optional.empty());
 
-        Category result = categoryService.addCategory(category1);
+        // Calling service method
+        Optional<Category> result = categoryService.getCategoryById(3L);
 
-        assertNotNull(result);
-        assertEquals("Electronics", result.getName());
-        verify(categoryRepository, times(1)).save(category1);
+        // Verifying the response
+        assertFalse(result.isPresent(), "Category should not be found.");
+        verify(categoryRepository, times(1)).findById(3L);
     }
 
     @Test
-    void updateCategory() {
+    void testAddCategory_SavesAndReturnsCategory() {
+        // Mocking repository save operation
+        when(categoryRepository.save(electronicsCategory)).thenReturn(electronicsCategory);
+
+        // Calling service method
+        Category result = categoryService.addCategory(electronicsCategory);
+
+        // Verifying the response
+        assertNotNull(result, "Saved category should not be null.");
+        assertEquals("Electronics", result.getName(), "Category name should match.");
+        verify(categoryRepository, times(1)).save(electronicsCategory);
+    }
+
+    @Test
+    void testUpdateCategory_WhenCategoryExists() {
+        // Mocking repository to find the existing category
         Category updatedCategory = new Category(1L, "Updated Electronics", "Updated Description");
-        when(categoryRepository.findById(1L)).thenReturn(Optional.of((category1)));
+        when(categoryRepository.findById(1L)).thenReturn(Optional.of(electronicsCategory));
         when(categoryRepository.save(any(Category.class))).thenReturn(updatedCategory);
 
+        // Calling service method
         Category result = categoryService.updateCategory(1L, updatedCategory);
 
-        assertNotNull(result);
-        assertEquals("Updated Electronics", result.getName());
+        // Verifying the response
+        assertNotNull(result, "Updated category should not be null.");
+        assertEquals("Updated Electronics", result.getName(), "Category name should be updated.");
         verify(categoryRepository, times(1)).findById(1L);
         verify(categoryRepository, times(1)).save(any(Category.class));
     }
 
     @Test
-    void deleteCategory() {
+    void testUpdateCategory_WhenCategoryDoesNotExist() {
+        // Mocking repository to return empty when category is not found
+        Category updatedCategory = new Category(3L, "Non-Existent", "This category doesn't exist.");
+        when(categoryRepository.findById(3L)).thenReturn(Optional.empty());
+
+        // Calling service method
+        Category result = categoryService.updateCategory(3L, updatedCategory);
+
+        // Verifying the response
+        assertNull(result, "Updating a non-existent category should return null.");
+        verify(categoryRepository, times(1)).findById(3L);
+        verify(categoryRepository, never()).save(any(Category.class));
+    }
+
+    @Test
+    void testDeleteCategory_WhenCategoryExists() {
+        // Mocking repository to return true when category exists
         when(categoryRepository.existsById(1L)).thenReturn(true);
         doNothing().when(categoryRepository).deleteById(1L);
 
+        // Calling service method
         boolean result = categoryService.deleteCategory(1L);
 
-        assertTrue(result);
+        // Verifying the response
+        assertTrue(result, "Deleting an existing category should return true.");
         verify(categoryRepository, times(1)).existsById(1L);
         verify(categoryRepository, times(1)).deleteById(1L);
     }
 
     @Test
-    void deleteCategory_NotExists() {
-        when(categoryRepository.existsById(1L)).thenReturn(false);
+    void testDeleteCategory_WhenCategoryDoesNotExist() {
+        // Mocking repository to return false when category does not exist
+        when(categoryRepository.existsById(3L)).thenReturn(false);
 
-        boolean result = categoryService.deleteCategory(1L);
+        // Calling service method
+        boolean result = categoryService.deleteCategory(3L);
 
-        assertFalse(result);
-        verify(categoryRepository, times(1)).existsById(1L);
-        verify(categoryRepository, never()).deleteById(1L);
+        // Verifying the response
+        assertFalse(result, "Deleting a non-existent category should return false.");
+        verify(categoryRepository, times(1)).existsById(3L);
+        verify(categoryRepository, never()).deleteById(3L);
     }
 }

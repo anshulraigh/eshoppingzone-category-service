@@ -1,9 +1,13 @@
 package com.eshoppingzone.categoryservice.entity;
 
 import jakarta.persistence.*;
+import lombok.*;
 
 @Entity
 @Table(name = "categories")
+@Data  // Generates getters, setters, toString, equals, and hashCode
+@NoArgsConstructor  // Generates a no-args constructor
+@AllArgsConstructor // Generates an all-args constructor
 public class Category {
 
     @Id
@@ -15,31 +19,4 @@ public class Category {
 
     @Column(nullable = false)
     private String description;
-
-    public Category() {}
-
-    public Category(String name, String description) {
-        this.name = name;
-        this.description = description;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
 }

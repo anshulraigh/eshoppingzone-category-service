@@ -1,5 +1,6 @@
 package com.eshoppingzone.categoryservice.service;
 
+import com.eshoppingzone.categoryservice.config.UserContext;
 import com.eshoppingzone.categoryservice.entity.Category;
 import com.eshoppingzone.categoryservice.repository.CategoryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,10 +24,12 @@ public class CategoryService {
     }
 
     public Category addCategory(Category category) {
+        checkAdminAccess();
         return categoryRepository.save(category);
     }
 
     public Category updateCategory(Long id, Category categoryDetails) {
+        checkAdminAccess();
         return categoryRepository.findById(id).map(category -> {
             category.setName(categoryDetails.getName());
             category.setDescription(categoryDetails.getDescription());
@@ -35,10 +38,17 @@ public class CategoryService {
     }
 
     public boolean deleteCategory(Long id) {
+        checkAdminAccess();
         if (categoryRepository.existsById(id)) {
             categoryRepository.deleteById(id);
             return true;
         }
         return false;
+    }
+
+    private void checkAdminAccess() {
+        if (!"ADMIN".equalsIgnoreCase(UserContext.getRole())) {
+            throw new RuntimeException("Access denied: Admin privileges required.");
+        }
     }
 }
